@@ -19,7 +19,7 @@ Depois, é só abrir um Konsole novo.
 | Prompt | Starship, `/usr/share/arkmos/starship.toml` | Starship, `starship.toml` daqui |
 | Plugins | autosuggestions e syntax-highlighting do RPM | os mesmos, do Homebrew |
 | Ferramentas | eza, bat, fd, rg, fzf, zoxide, mise, nvim, lazygit | as mesmas (`Brewfile`; o fzf é o do Bazzite) |
-| Terminal | foot, Tokyo Night, 90% de opacidade | Konsole, perfil `Arkmos` com os mesmos valores |
+| Terminal | foot, Tokyo Night, 90% de opacidade | Konsole, perfil `Arkmos` com os mesmos valores (fonte em 10: o Konsole desenha maior que o foot) |
 
 Atalhos: `Ctrl+R` busca no histórico (fzf), `Ctrl+T` busca arquivos,
 `Alt+C` entra em diretórios, `↑` busca pelo que já está digitado e
