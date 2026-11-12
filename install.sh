@@ -10,7 +10,6 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}"
 STATE="${XDG_STATE_HOME:-$HOME/.local/state}"
 DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
 BACKUP="$STATE/terminal-arkmos/backup-$(date +%Y%m%d-%H%M%S)"
@@ -42,21 +41,6 @@ backup() {
     info "backup: ${file/#$HOME/\~} -> ${dest/#$HOME/\~}"
 }
 
-# Cria o link $2 -> $1, guardando antes o que estiver no caminho.
-link() {
-    local src="$1" dst="$2"
-    if [ -L "$dst" ] && [ "$(readlink "$dst")" = "$src" ]; then
-        info "ok: ${dst/#$HOME/\~}"
-        return
-    fi
-    if [ -e "$dst" ] || [ -L "$dst" ]; then
-        backup "$dst"
-    fi
-    mkdir -p "$(dirname "$dst")"
-    ln -s "$src" "$dst"
-    info "link: ${dst/#$HOME/\~} -> ${src/#$HOME/\~}"
-}
-
 # --- Pacotes ---------------------------------------------------------------
 
 if [ "$with_brew" = 1 ]; then
@@ -78,20 +62,31 @@ done
 # --- Zsh -------------------------------------------------------------------
 
 step "Zsh"
-link "$REPO/zshenv" "$HOME/.zshenv"
-link "$REPO/zsh/.zshrc" "$CONFIG/zsh/.zshrc"
+# O ~/.zshrc é um arquivo comum, e não um link: a primeira linha carrega o
+# zsh/init.zsh daqui, e o resto é da máquina — inclusive o que instaladores
+# como o lerd acrescentam. Um ~/.zshrc que já carrega o init.zsh fica como
+# está; qualquer outro vai para o backup e dá lugar ao zsh/zshrc.example.
+init="$REPO/zsh/init.zsh"
 
-# Com o ZDOTDIR em ~/.config/zsh, o ~/.zshrc deixa de ser lido. Tirá-lo do
-# caminho deixa claro que não é mais ele que vale.
-if [ -e "$HOME/.zshrc" ] && [ ! -L "$HOME/.zshrc" ]; then
-    backup "$HOME/.zshrc"
-fi
+# A linha usa $HOME no lugar do caminho absoluto, para continuar valendo se o
+# repositório estiver no mesmo lugar em outra conta. No Bazzite o /home é um
+# link para /var/home, então o caminho do repositório pode vir em qualquer das
+# duas formas.
+init_line="$init"
+for home in "$HOME" "$(realpath "$HOME")"; do
+    case "$init" in
+        "$home"/*) init_line="\$HOME/${init#"$home"/}" ;;
+    esac
+done
 
-if [ ! -e "$CONFIG/zsh/local.zsh" ]; then
-    cp "$REPO/zsh/local.zsh.example" "$CONFIG/zsh/local.zsh"
-    info "criado: ~/.config/zsh/local.zsh"
+if [ -f "$HOME/.zshrc" ] && grep -qF -e "$init" -e "$init_line" "$HOME/.zshrc"; then
+    info "ok: ~/.zshrc (mantido como está)"
 else
-    info "ok: ~/.config/zsh/local.zsh (mantido como está)"
+    if [ -e "$HOME/.zshrc" ] || [ -L "$HOME/.zshrc" ]; then
+        backup "$HOME/.zshrc"
+    fi
+    sed "s|@INIT@|$init_line|" "$REPO/zsh/zshrc.example" >"$HOME/.zshrc"
+    info "criado: ~/.zshrc"
 fi
 
 # O histórico do zsh antigo vira o ponto de partida do novo, uma vez só.
@@ -132,8 +127,7 @@ trap 'rm -rf "$tmp"' EXIT
 
 # Aspas simples de propósito: as variáveis são do zsh lá dentro, não deste bash.
 # shellcheck disable=SC2016
-probe='print -r -- "ZDOTDIR=$ZDOTDIR"
-print -r -- "starship=$STARSHIP_CONFIG"
+probe='print -r -- "starship=$STARSHIP_CONFIG"
 print -r -- "editor=$EDITOR"
 (( $+functions[_zsh_autosuggest_start] )) && print autosuggestions=ok
 (( $+ZSH_HIGHLIGHT_VERSION )) && print syntax-highlighting=ok
@@ -142,7 +136,7 @@ print -r -- "editor=$EDITOR"
 true'
 printf '%s\n' "$probe" >"$tmp/probe.zsh"
 
-script -qec "env -u ZDOTDIR -u STARSHIP_CONFIG zsh -i '$tmp/probe.zsh' >'$tmp/out' 2>'$tmp/err'" /dev/null >/dev/null
+script -qec "env -u STARSHIP_CONFIG zsh -i '$tmp/probe.zsh' >'$tmp/out' 2>'$tmp/err'" /dev/null >/dev/null
 
 if [ -s "$tmp/err" ]; then
     echo "o zsh abriu com erros:" >&2

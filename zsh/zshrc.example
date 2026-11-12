@@ -1,8 +1,9 @@
-# ~/.config/zsh/local.zsh — ajustes desta máquina.
+# ~/.zshrc
 #
-# Criado pelo install.sh a partir de zsh/local.zsh.example, e nunca
-# sobrescrito depois. Não é versionado: é aqui que fica o que vale só para
-# esta conta. Carregado por último, então vence tudo o que o repositório define.
+# A primeira linha carrega o terminal do Arkmos (github.com/AlexRogaleski/
+# terminal-arkmos). Tudo abaixo dela é desta máquina, não é versionado e vence
+# o que o repositório define. Instaladores podem acrescentar linhas aqui.
+source "@INIT@"
 
 # Modo vi na linha de comando, em vez do emacs:
 # bindkey -v
