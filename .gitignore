@@ -1,0 +1,3 @@
+# O local.zsh vive em ~/.config/zsh, fora daqui; isto evita versionar uma
+# cópia por engano.
+zsh/local.zsh

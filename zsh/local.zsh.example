@@ -1,0 +1,18 @@
+# ~/.config/zsh/local.zsh — ajustes desta máquina.
+#
+# Criado pelo install.sh a partir de zsh/local.zsh.example, e nunca
+# sobrescrito depois. Não é versionado: é aqui que fica o que vale só para
+# esta conta. Carregado por último, então vence tudo o que o repositório define.
+
+# Modo vi na linha de comando, em vez do emacs:
+# bindkey -v
+
+# Outro editor:
+# export EDITOR=code VISUAL='code --wait'
+
+# Ferramentas que o ~/.bashrc configura e o zsh não vê, se precisar delas aqui:
+# path=("$HOME/fvm/default/bin" "$HOME/.pub-cache/bin" $path)
+# export ANDROID_HOME="$HOME/Android/Sdk"
+# path=("$ANDROID_HOME/emulator" "$ANDROID_HOME/platform-tools" $path)
+# export JAVA_HOME="$HOMEBREW_PREFIX/opt/openjdk@21/libexec"
+# path=("$JAVA_HOME/bin" $path)

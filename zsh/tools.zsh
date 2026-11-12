@@ -1,0 +1,61 @@
+# Integrações com as ferramentas do Brewfile.
+
+# --- Ambiente --------------------------------------------------------------
+
+# Atribuído direto, e não com ${EDITOR:-...}: o Fedora traz
+# /etc/profile.d/nano-default-editor.sh, que define EDITOR=/usr/bin/nano, e o
+# /etc/zshrc faz source dos profile.d ANTES desta configuração. Com ':-' o
+# nano ganharia sempre, e o neovim do Brewfile nunca seria usado.
+#
+# Quem preferir outro editor troca em ~/.config/zsh/local.zsh, carregado
+# depois deste arquivo.
+(( $+commands[nvim] )) && export EDITOR=nvim
+export VISUAL="$EDITOR"
+export PAGER=less
+
+# -R preserva cor, -F sai se couber numa tela, -X não limpa a tela ao sair.
+export LESS='-R -F -X'
+
+# --- Prompt ----------------------------------------------------------------
+
+if (( $+commands[starship] )); then
+    # O starship.toml da raiz deste repositório; o ~/.config/starship.toml
+    # deixa de ser lido. Um STARSHIP_CONFIG já definido no ambiente vence.
+    export STARSHIP_CONFIG="${STARSHIP_CONFIG:-${ARKMOS_ZSH:h}/starship.toml}"
+    eval "$(starship init zsh)"
+fi
+
+# --- Navegação -------------------------------------------------------------
+
+# zoxide substitui o cd: continua aceitando caminho normal, e passa a aceitar
+# pedaço do nome de um diretório visitado antes.
+(( $+commands[zoxide] )) && eval "$(zoxide init --cmd cd zsh)"
+
+# --- fzf -------------------------------------------------------------------
+
+# Ctrl+R no histórico, Ctrl+T em arquivos, Alt+C em diretórios.
+#
+# Pelo próprio binário, e não pelo key-bindings.zsh de /usr/share como no
+# Arkmos: o Bazzite traz um fzf em /usr/bin e o brew pode trazer outro, e o
+# script precisa ser da mesma versão do binário que vai rodar.
+(( $+commands[fzf] )) && source <(fzf --zsh)
+
+if (( $+commands[fd] )); then
+    export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+    export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+    export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
+fi
+
+export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border --info=inline'
+
+# --- Toolchains ------------------------------------------------------------
+
+# O mise gerencia versões de linguagem por projeto. Ativar
+# instala um hook de precmd: ao entrar num diretório com .mise.toml, o PATH
+# passa a apontar para as versões declaradas ali.
+#
+# Aqui, e não num arquivo de ambiente: 'mise activate' existe para shell
+# interativo. O que precisa dessas versões fora do shell — tarefa do VS Code,
+# serviço do systemd --user, hook de editor — usa os shims que o próprio mise
+# mantém em ~/.local/share/mise/shims, e que funcionam sem hook nenhum.
+(( $+commands[mise] )) && eval "$(mise activate zsh)"
